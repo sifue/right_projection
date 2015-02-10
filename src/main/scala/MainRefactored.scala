@@ -36,28 +36,18 @@ object MainRefactored {
   }
 
   def findUser(userId: Int): Either[Failure, User] = {
-    userDatabase.get(userId) match {
-      case Some(user) => Right(user)
-      case None => Left(UserNotFound())
-    }
+    userDatabase.get(userId).toRight(UserNotFound())
   }
 
   def findAddress(user: User): Either[Failure, Address] = {
-    user.addressId match {
-      case Some(addressId) =>
-        addressDatabase.get(addressId) match {
-          case Some(address) => Right(address)
-          case None => Left(AddressNotFound())
-        }
-      case None => Left(UserNotHasAddress())
-    }
+    for {
+      addressId <- user.addressId.toRight(UserNotHasAddress()).right
+      address <- addressDatabase.get(addressId).toRight(AddressNotFound()).right
+    } yield address
   }
 
   def findPostalCode(address: Address): Either[Failure, String] = {
-    address.postalCode match {
-      case Some(postalCode) => Right(postalCode)
-      case None => Left(AddressNotHasPostalCode())
-    }
+    address.postalCode.toRight(AddressNotHasPostalCode())
   }
 
   def main(args: Array[String]): Unit = {
